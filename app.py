@@ -30,37 +30,34 @@ uploaded_file = st.file_uploader(
 
 if uploaded_file is not None:
 
-    image = Image.open(uploaded_file)
+    image = Image.open(uploaded_file).convert("RGB")
 
-    st.image(
-        image,
-        caption="Gambar yang diupload",
-        use_container_width=True
-    )
+st.image(
+    image,
+    caption="Gambar yang diupload",
+    use_container_width=True
+)
 
-    img = image.resize((128,128))
-    img = np.array(img)
+img = image.resize((128, 128))
+img = np.array(img, dtype=np.float32)
 
-    if len(img.shape) == 2:
-        img = np.stack([img]*3, axis=-1)
+img = img / 255.0
+img = np.expand_dims(img, axis=0)
 
-    img = img / 255.0
-    img = np.expand_dims(img, axis=0)
-
+try:
     pred = model.predict(img, verbose=0)
+except Exception as e:
+    st.error(f"Terjadi kesalahan saat memproses gambar: {e}")
+    st.stop()
 
-    confidence = float(pred[0][0])
+confidence = float(pred[0][0])
 
-    st.subheader("Hasil Prediksi")
+st.subheader("Hasil Prediksi")
 
-    if confidence > 0.5:
-        st.success(
-            f"REAL ({confidence*100:.2f}%)"
-        )
-    else:
-        st.error(
-            f"FAKE ({(1-confidence)*100:.2f}%)"
-        )
+if confidence > 0.5:
+    st.success(f"REAL ({confidence*100:.2f}%)")
+else:
+    st.error(f"FAKE ({(1-confidence)*100:.2f}%)")
 
 st.markdown("---")
 st.caption(
